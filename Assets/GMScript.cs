@@ -31,7 +31,6 @@ public class GMScript : MonoBehaviour
     private int _maxBx = -9999;
     private int _maxBy = -9999;
 
-    private float adaptive = 1f;
     private int _inARow;
 
     // private int _width = 0, _height = 0;
@@ -56,12 +55,12 @@ public class GMScript : MonoBehaviour
 
     void InitializePieces()
     {
-        PIECE_T = new Vector3Int[] { new Vector3Int(0,-1), new Vector3Int(1,-1), new Vector3Int(0,0),  new Vector3Int(-1,-1) };
-        PIECE_L = new Vector3Int[] { new Vector3Int(0,-1), new Vector3Int(1,-1), new Vector3Int(1,0), new Vector3Int(-1,-1) };
-        PIECE_J = new Vector3Int[] { new Vector3Int(0,-1), new Vector3Int(1,-1), new Vector3Int(-1,0), new Vector3Int(-1,-1) };
-        PIECE_S = new Vector3Int[] { new Vector3Int(0,-1), new Vector3Int(-1,-1),new Vector3Int(0,0),  new Vector3Int(1,0) };
-        PIECE_Z = new Vector3Int[] { new Vector3Int(0,-1), new Vector3Int(1,-1), new Vector3Int(0,0),  new Vector3Int(-1,0) };
-        PIECE_I = new Vector3Int[] { new Vector3Int(0,0),  new Vector3Int(-1,0), new Vector3Int(-2,0), new Vector3Int(1,0) };
+        PIECE_T = new Vector3Int[] { new(0,-1), new(1,-1), new(0,0),  new(-1,-1) };
+        PIECE_L = new Vector3Int[] { new(0,-1), new(1,-1), new(1,0),  new(-1,-1) };
+        PIECE_J = new Vector3Int[] { new(0,-1), new(1,-1), new(-1,0), new(-1,-1) };
+        PIECE_S = new Vector3Int[] { new(0,-1), new(-1,-1),new(0,0),  new(1,0) };
+        PIECE_Z = new Vector3Int[] { new(0,-1), new(1,-1), new(0,0),  new(-1,0) };
+        PIECE_I = new Vector3Int[] { new(0,0),  new(-1,0), new(-2,0), new(1,0) };
         PIECES = new []{PIECE_T,PIECE_L,PIECE_Z,PIECE_J,PIECE_S,PIECE_I};
     }
     
@@ -72,10 +71,6 @@ public class GMScript : MonoBehaviour
         _dirty = true;
         _initialized = false;
         InitializePieces();
-        LoadGame();
-        _fixedUpdateFramesToWait = -(int)Math.Floor(adaptive * 10f) + 20;
-        if (_fixedUpdateFramesToWait < 3) _fixedUpdateFramesToWait = 3;
-
     }
 
 
@@ -120,7 +115,7 @@ public class GMScript : MonoBehaviour
             }
         }
 
-         
+        BlankBaseBoard();
         Debug.Log($"BOARD SIZE = {(1 + _maxBx - _minBx)} x {(1 + _maxBy - _minBy)}");
     }
 
@@ -131,7 +126,7 @@ public class GMScript : MonoBehaviour
         {
             if (p.y > row)
             {
-                Vector3Int [] movedPieces = {new Vector3Int(p.x, p.y - 1, p.z)};
+                Vector3Int [] movedPieces = {new(p.x, p.y - 1, p.z)};
                 newChunk = newChunk.Concat(movedPieces).ToArray();
             } else if (p.y < row)
             {
@@ -237,7 +232,7 @@ public class GMScript : MonoBehaviour
     }
     bool AddChunkAtPoint(Vector3Int chunkPoint)
     {
-        if (_myChunk == null) _myChunk = new Vector3Int[] { };
+        _myChunk ??= new Vector3Int[] {};
         if (_myChunk.Any(p => p.x == chunkPoint.x && p.y == chunkPoint.y))
             return false;
         _myChunk = _myChunk.Concat(new [] {chunkPoint}).ToArray();
@@ -249,7 +244,7 @@ public class GMScript : MonoBehaviour
         if (null == _myPiece) return;
         while (ShiftPiece(0, -1)) { }
 
-        if(_myChunk == null)_myChunk = new Vector3Int[] {};
+        _myChunk ??= new Vector3Int[] {};
         _myChunk = _myChunk.Concat(_myPiece).ToArray();
         _myPiece = null;
     }
@@ -344,7 +339,6 @@ public class GMScript : MonoBehaviour
             if (!MakeNewPiece(0,_maxBy))
             {   
                 Debug.Log("NO VALID MOVE");
-                SaveGame(adaptive);
                 Debug.Break();
             }
         }
@@ -363,56 +357,13 @@ public class GMScript : MonoBehaviour
         else if (Input.GetKeyDown(KeyCode.RightArrow)) { DoTetrisRight(); }
         else if (Input.GetKeyDown(KeyCode.UpArrow)) { DoTetrisUp(); }
         else if (Input.GetKeyDown(KeyCode.DownArrow)) { DoTetrisDrop(); }
-        else if (Input.GetKeyDown(KeyCode.R)) { ResetData(); }
 
-        TestAdaptiveLevels();
         if (_dirty)
         {
             DrawBoard();
             DrawPiece();
         }
-    }
-
-
-    void SaveGame(float adaptive)
-    {
-        adaptive = (_score / 10f)*0.3f + 0.7f*adaptive;
-        PlayerPrefs.SetFloat("adaptive", adaptive);
-        PlayerPrefs.Save();
-        Debug.Log("Game data saved! adaptive: "+adaptive);
-    }
-
-    void LoadGame()
-    {
-        if (PlayerPrefs.HasKey("adaptive"))
-        {
-           
-            adaptive = PlayerPrefs.GetFloat("adaptive");
-            Debug.Log("Game data loaded! adaptive: "+adaptive);
-        }
-        else
-            Debug.LogError("There is no save data!");
-    }
-
-    void ResetData()
-    {
-        PlayerPrefs.DeleteAll();
-        adaptive = 1f;
-        _fixedUpdateFramesToWait = -(int)Math.Floor(adaptive * 10f) + 20;
-        Debug.Log("Data reset complete! adaptive: "+adaptive);
-    }
-    void ResetDataByFloat(float newAdaptive)
-    {
-        PlayerPrefs.DeleteAll();
-        adaptive = newAdaptive;
-        _fixedUpdateFramesToWait = -(int)Math.Floor(adaptive * 10f) + 20;
-        Debug.Log("Data reset complete! adaptive: " + adaptive);
-    }
-
-    void TestAdaptiveLevels()
-    {
-        if (Input.GetKeyDown(KeyCode.J)) { ResetDataByFloat(0.1f); }
-        else if (Input.GetKeyDown(KeyCode.K)) { ResetDataByFloat(1f); }
-        else if (Input.GetKeyDown(KeyCode.L)) { ResetDataByFloat(1.9f); }
-    }
+    } 
+    
+   
 }
