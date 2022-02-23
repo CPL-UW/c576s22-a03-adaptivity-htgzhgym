@@ -189,7 +189,13 @@ MonoBehaviour:
 
     DN:DROP
 
-    Q :QUIT'
+    Q :QUIT
+
+
+    -------
+
+
+    R:RESET'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 36455d494ab36465b94b6a1f8d20d817, type: 2}
   m_sharedMaterial: {fileID: 4705425391772312874, guid: 36455d494ab36465b94b6a1f8d20d817, type: 2}
